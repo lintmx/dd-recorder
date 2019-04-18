@@ -92,7 +92,7 @@ func main() {
 	}
 
 	if version {
-		fmt.Fprintf(os.Stdout, "%s - %s Build %s With %s\n", Name, Version, Build, GoVersion)
+		fmt.Fprintf(os.Stdout, "%s (%s) Build %s With %s\n", Name, Version, Build, GoVersion)
 		os.Exit(0)
 	}
 
