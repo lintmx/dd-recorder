@@ -28,5 +28,5 @@ func HTTPGet(url string) (string, error) {
 
 // FilterInvalidCharacters replace invalid filename character
 func FilterInvalidCharacters(str string) string {
-	return regexp.MustCompile(`[\/\\\!\:\*\?\"\<\>\|\]`).ReplaceAllString(str, "_")
+	return regexp.MustCompile(`[\/\\\!\:\*\?\"\<\>\|]`).ReplaceAllString(str, "_")
 }
