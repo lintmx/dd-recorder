@@ -1,10 +1,10 @@
 package api
 
 import (
-	"net/url"
 	"fmt"
 	"github.com/lintmx/dd-recorder/utils"
 	"github.com/tidwall/gjson"
+	"net/url"
 	"regexp"
 )
 
@@ -114,7 +114,7 @@ func (b *BilibiliLive) GetStreamURLs() ([]StreamURL, error) {
 		return streamURLs, fmt.Errorf("bilibiliPlayURLAPI - %s", gjson.Get(body, "msg").String())
 	}
 
-	gjson.Get(body, "data.durl.#.url").ForEach(func (key, value gjson.Result) bool {
+	gjson.Get(body, "data.durl.#.url").ForEach(func(key, value gjson.Result) bool {
 		liveURL, err := url.Parse(value.String())
 
 		if err != nil {
@@ -122,7 +122,7 @@ func (b *BilibiliLive) GetStreamURLs() ([]StreamURL, error) {
 		}
 
 		streamURL := StreamURL{
-			PlayURL: *liveURL,
+			PlayURL:  *liveURL,
 			FileType: "flv",
 		}
 

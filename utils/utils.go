@@ -1,11 +1,11 @@
 package utils
 
 import (
-	"regexp"
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 // GetMd5 get md5
