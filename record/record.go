@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lintmx/dd-recorder/api"
 	"github.com/lintmx/dd-recorder/instance"
+	"github.com/lintmx/dd-recorder/utils"
 	"go.uber.org/zap"
 	"os"
 	"os/exec"
@@ -62,17 +63,17 @@ func (r *Record) Run(ctx context.Context) {
 			}
 
 			outPath := filepath.Join(inst.Config.OutPath,
-				r.LiveAPI.GetPlatformName(),
-				r.LiveAPI.GetAuthor(),
+				utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
+				utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
 				now.Format("2006-01-02"),
 			)
 			os.MkdirAll(outPath, os.ModePerm)
 			outFile := filepath.Join(outPath,
 				fmt.Sprintf("[%s][%s][%s] %s.%s",
 					now.Format("2006-01-02 15:04:05"),
-					r.LiveAPI.GetPlatformName(),
-					r.LiveAPI.GetAuthor(),
-					r.LiveAPI.GetTitle(),
+					utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
+					utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
+					utils.FilterInvalidCharacters(r.LiveAPI.GetTitle()),
 					streamURL.FileType,
 				),
 			)

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"regexp"
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
@@ -23,4 +24,9 @@ func HTTPGet(url string) (string, error) {
 	body, err := ioutil.ReadAll(response.Body)
 
 	return string(body), err
+}
+
+// FilterInvalidCharacters replace invalid filename character
+func FilterInvalidCharacters(str string) string {
+	return regexp.MustCompile(`[\/\\\!\:\*\?\"\<\>\|\]`).ReplaceAllString(str, "_")
 }
