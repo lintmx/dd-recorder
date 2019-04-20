@@ -1,4 +1,7 @@
 # dd-recorder
+[![Build Status](https://travis-ci.org/lintmx/dd-recorder.svg?branch=master)](https://travis-ci.org/lintmx/dd-recorder)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lintmx/dd-recorder)](https://goreportcard.com/report/github.com/lintmx/dd-recorder)
+[![GitHub release](https://img.shields.io/github/release-pre/lintmx/dd-recorder.svg?label=pre-release)](https://github.com/lintmx/dd-recorder/releases/latest)
 
 一个直播平台录制工具 ~~监控室监控器~~ ，用于自动录制指定直播间的直播和弹幕。
 
