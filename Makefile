@@ -16,9 +16,11 @@ VERSION=$(shell git describe --tags || echo "testing version" )
 # Go Build ldflags
 LDFLAGS=-ldflags "-w -s -X 'main.Name=$(NAME)' -X 'main.Version=$(VERSION)' -X 'main.Build=`date`' -X 'main.GoVersion=`$(GOVER)`'"
 
-all:
+all: mkdir
+	$(GOBUILD) ${LDFLAGS} -o $(GOBIN)/$(NAME)\
+
+mkdir:
 	@mkdir -p $(GOBIN)
-	$(GOBUILD) ${LDFLAGS} -o $(GOBIN)/$(NAME)
 
 clean:
 	@rm -rf $(GOBIN)
@@ -58,7 +60,9 @@ release-windows-amd64: build-windows-amd64
 	@zip -j $(GOBIN)/$(NAME)-windows-amd64.zip config.yml $(GOBIN)/$(NAME)-windows-amd64.exe
 	@rm -rf $(GOBIN)/$(NAME)-windows-amd64.exe
 
-release: release-linux-386 \
+release: clean \
+	mkdir \
+	release-linux-386 \
 	release-linux-amd64 \
 	release-darwin-amd64 \
 	release-windows-386 \
