@@ -2,6 +2,10 @@ language: go
 go:
 - master
 
+env:
+  global:
+    - GO111MODULE=on
+
 install:
   - "go mod download"
 
