@@ -76,10 +76,11 @@ func (y *YouTubeLive) RefreshLiveInfo() error {
 	status := gjson.Get(liveInfo, "args.livestream")
 
 	if !status.Exists() || status.Int() != 1 {
+		y.liveStatus = false
 		return nil
 	}
 
-	y.liveStatus = status.Int() == 1
+	y.liveStatus = true
 	y.liveAuthor = gjson.Get(liveInfo, "args.author").String()
 	y.liveTitle = gjson.Get(liveInfo, "args.title").String()
 

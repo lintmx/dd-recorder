@@ -71,8 +71,8 @@ func (b *BilibiliLive) RefreshLiveInfo() error {
 	}
 
 	status := gjson.Get(body, "data.live_status").Int() == 1
-	// return when live status is false or live status not change
-	if !status || b.liveStatus == status {
+	// return when live status not change
+	if b.liveStatus == status {
 		return nil
 	}
 	b.liveStatus = status
