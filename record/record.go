@@ -167,7 +167,7 @@ func (r *Record) recordDanmaku() {
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?><i><chatserver>chat.bilibili.com</chatserver><chatid>0</chatid><mission>0</mission><maxlimit>0</maxlimit><source>k-v</source>\n",
 			)
 		}
-		// fmt.Println(m.SendTime)
+
 		// TODO: fix negative number
 		file.WriteString(
 			fmt.Sprintf(
@@ -177,8 +177,6 @@ func (r *Record) recordDanmaku() {
 				m.Content,
 			),
 		)
-		fmt.Println()
-
 	}
 	file.WriteString("</i>")
 	file.Close()
