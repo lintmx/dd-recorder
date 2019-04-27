@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 )
 
 // Config struct
@@ -15,20 +16,22 @@ type Config struct {
 	Rooms    []string `yaml:"rooms"`
 }
 
-// Parse Configuration file
-func Parse(path string) (*Config, error) {
-	// Read Configuration file
-	file, err := ioutil.ReadFile(path)
+// InitConfig return a config with parse
+func InitConfig(conf string) *Config {
+	config := &Config{}
+
+	file, err := ioutil.ReadFile(conf)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read configuration file - %s", path)
+		fmt.Fprintf(os.Stderr, "Unable to read configuration file - %s\n", conf)
+		os.Exit(1)
 	}
 
-	c := &Config{}
 	// Parse yaml
-	err = yaml.Unmarshal(file, &c)
+	err = yaml.Unmarshal(file, config)
 	if err != nil {
-		return nil, fmt.Errorf("Configuration file parsing failed - %s", path)
+		fmt.Fprintf(os.Stderr, "Configuration file parsing failed - %s\n", conf)
+		os.Exit(1)
 	}
 
-	return c, nil
+	return config
 }

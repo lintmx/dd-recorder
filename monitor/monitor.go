@@ -2,11 +2,9 @@ package monitor
 
 import (
 	"context"
-	"fmt"
 	"github.com/lintmx/dd-recorder/api"
 	"github.com/lintmx/dd-recorder/instance"
 	"github.com/lintmx/dd-recorder/record"
-	"github.com/lintmx/dd-recorder/utils"
 	"go.uber.org/zap"
 	"time"
 )
@@ -15,43 +13,26 @@ import (
 type Monitor struct {
 	MonitorID  string
 	LiveAPI    api.LiveAPI
-	TimeTicker *time.Ticker
 	LiveStatus bool
 	StopChan   chan struct{}
-	rec        record.Record
+	rec        *record.Record
 }
 
 // Run a dd monitor
 func (m *Monitor) Run(ctx context.Context) {
 	inst := instance.GetInstance(ctx)
-	inst.Logger.Info("Init Monitor",
-		zap.String("MonitorId", m.MonitorID),
-		zap.String("Platform", m.LiveAPI.GetPlatformName()),
-		zap.String("Url", m.LiveAPI.GetLiveURL()),
-	)
 	defer inst.WaitGroup.Done()
-	defer inst.Logger.Info("Stop Monitor",
-		zap.String("MonitorId", m.MonitorID),
-		zap.String("Platform", m.LiveAPI.GetPlatformName()),
-		zap.String("Url", m.LiveAPI.GetLiveURL()),
-	)
+	timer := time.NewTimer(0)
+	m.rec = record.New(m.MonitorID, m.LiveAPI)
 
-	m.rec = record.Record{
-		MonitorID: m.MonitorID,
-		LiveAPI:   m.LiveAPI,
-	}
-
-	m.refresh(ctx)
 	for {
 		select {
-		case <-ctx.Done():
-			// turn off started record
-			if m.LiveStatus == true {
-				m.stop()
-			}
+		case <-ctx.Done(): // Exit Signal
+			m.rec.Stop()
 			return
-		case <-m.TimeTicker.C:
+		case <-timer.C:
 			m.refresh(ctx)
+			timer.Reset(time.Duration(inst.Config.Interval) * time.Second)
 		}
 	}
 }
@@ -61,10 +42,9 @@ func (m *Monitor) refresh(ctx context.Context) {
 	err := m.LiveAPI.RefreshLiveInfo()
 
 	if err != nil {
-		instance.GetInstance(ctx).Logger.Error(err.Error(),
+		zap.L().Error("Refresh Live Info",
 			zap.String("MonitorId", m.MonitorID),
-			zap.String("Platform", m.LiveAPI.GetPlatformName()),
-			zap.String("Url", m.LiveAPI.GetLiveURL()),
+			zap.String("Err", err.Error()),
 		)
 		return
 	}
@@ -73,22 +53,10 @@ func (m *Monitor) refresh(ctx context.Context) {
 		m.LiveStatus = m.LiveAPI.GetLiveStatus()
 
 		if m.LiveStatus {
-			m.start(ctx)
+			instance.GetInstance(ctx).WaitGroup.Add(1)
+			go m.rec.Start(ctx)
 		} else {
-			m.stop()
+			m.rec.Stop()
 		}
 	}
-}
-
-// start a record
-func (m *Monitor) start(ctx context.Context) {
-	instance.GetInstance(ctx).WaitGroup.Add(1)
-	m.rec.StopChan = make(chan struct{})
-	m.rec.RecordID = utils.GetMd5(fmt.Sprintf("%s%s", m.MonitorID, m.LiveAPI.GetTitle()))
-	go m.rec.Run(ctx)
-}
-
-// stop a record
-func (m *Monitor) stop() {
-	m.rec.Stop()
 }

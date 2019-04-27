@@ -1,5 +1,5 @@
 debug: false
-log_path: ./recorder.log
+log_path: log   # empty to disable log file
 interval: 15
 out_path: ./Live
 rooms:
