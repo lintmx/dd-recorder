@@ -1,9 +1,0 @@
-debug: false
-log_path: log   # empty to disable log file
-interval: 15
-out_path: ./Live1111
-rooms:
-  - https://live.bilibili.com/12235923
-  - https://live.bilibili.com/14917277
-  - https://www.youtube.com/channel/UCWCc8tO-uUl_7SJXIKJACMw/live
-  - https://www.youtube.com/channel/UC1opHUrw8rvnsadT-iGp7Cg/live
