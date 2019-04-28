@@ -8,7 +8,6 @@ import (
 	"github.com/lintmx/dd-recorder/utils"
 	"go.uber.org/zap"
 	"net/url"
-	"time"
 )
 
 // DD start
@@ -20,20 +19,25 @@ func DD(ctx context.Context) {
 		u, err := url.Parse(room)
 
 		if err != nil {
-			inst.Logger.Error("Room Url Parse Error", zap.String("url", room))
+			zap.S().Error("Room Url Parse Error", zap.String("url", room))
 			continue
 		}
 
 		api := api.Check(u)
 		if api == nil {
-			inst.Logger.Error("Room not support", zap.String("host", u.Host))
+			zap.S().Error("Room not support", zap.String("host", u.Host))
 		} else {
 			inst.WaitGroup.Add(1)
 			m := monitor.Monitor{
-				MonitorID:  utils.GetMd5(u.String()),
-				LiveAPI:    api,
-				TimeTicker: time.NewTicker(time.Duration(inst.Config.Interval) * time.Second),
+				MonitorID: utils.BKDRHash64(u.String()),
+				LiveAPI:   api,
 			}
+
+			zap.L().Info("Monitor Init",
+				zap.String("Id", m.MonitorID),
+				zap.String("Author", m.LiveAPI.GetAuthor()),
+				zap.String("Platform", m.LiveAPI.GetPlatformName()),
+			)
 			go m.Run(ctx)
 		}
 	}

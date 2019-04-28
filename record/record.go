@@ -10,41 +10,82 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
 // Record struct
 type Record struct {
-	MonitorID string
-	RecordID  string
-	LiveAPI   api.LiveAPI
-	StopChan  chan struct{}
-	cmd       *exec.Cmd
+	MonitorID    string
+	RecordID     string
+	RecordStatus bool
+	doneChan     chan struct{}
+	LiveAPI      api.LiveAPI
+	outPath      string
+	outFile      string
+	startTime    time.Time
+	cmd          *exec.Cmd
+	waitGroup    *sync.WaitGroup
 }
 
-// Run record
-func (r *Record) Run(ctx context.Context) {
+// New and return a Record
+func New(monitorID string, liveAPI api.LiveAPI) *Record {
+	record := Record{
+		MonitorID: monitorID,
+		LiveAPI:   liveAPI,
+		waitGroup: &sync.WaitGroup{},
+	}
+
+	return &record
+}
+
+// Start Record
+func (r *Record) Start(ctx context.Context) {
 	inst := instance.GetInstance(ctx)
-	inst.Logger.Info("Start Record",
-		zap.String("MonitorId", r.MonitorID),
-		zap.String("RecordId", r.RecordID),
-		zap.String("Author", r.LiveAPI.GetAuthor()),
-	)
 	defer inst.WaitGroup.Done()
-	defer inst.Logger.Info("Stop Record",
+	r.doneChan = make(chan struct{})
+	if r.RecordStatus {
+		return
+	}
+	r.RecordStatus = true
+	r.doneChan = make(chan struct{})
+	r.outPath = filepath.Join(inst.Config.OutPath,
+		utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
+		utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
+		time.Now().Format("2006-01-02"),
+	)
+	os.MkdirAll(r.outPath, os.ModePerm)
+
+	zap.L().Info("Record Start",
 		zap.String("Id", r.MonitorID),
-		zap.String("RecordId", r.RecordID),
 		zap.String("Author", r.LiveAPI.GetAuthor()),
+		zap.String("Title", r.LiveAPI.GetTitle()),
 	)
 
+	r.waitGroup.Add(1)
+	go r.recordStream()
+	r.waitGroup.Add(1)
+	go r.recordDanmaku()
+	r.waitGroup.Wait()
+	r.RecordStatus = false
+	r.outPath = ""
+	r.outFile = ""
+
+	zap.L().Info("Record Stop",
+		zap.String("Id", r.MonitorID),
+		zap.String("Author", r.LiveAPI.GetAuthor()),
+		zap.String("Title", r.LiveAPI.GetTitle()),
+	)
+}
+
+func (r *Record) recordStream() {
+	defer r.waitGroup.Done()
 	for {
 		select {
-		case <-r.StopChan:
+		case <-r.doneChan:
 			return
 		default:
 			streamURLs, err := r.LiveAPI.GetStreamURLs()
-			now := time.Now()
-
 			if err != nil {
 				time.Sleep(3 * time.Second)
 				continue
@@ -52,7 +93,7 @@ func (r *Record) Run(ctx context.Context) {
 
 			streamURL := api.StreamURL{}
 			for _, stream := range streamURLs {
-				// TODO: 播放链接选择
+				// TODO: Stream Url Select
 				streamURL = stream
 				break
 			}
@@ -61,20 +102,15 @@ func (r *Record) Run(ctx context.Context) {
 				time.Sleep(3 * time.Second)
 				continue
 			}
+			t := time.Now()
 
-			outPath := filepath.Join(inst.Config.OutPath,
-				utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
-				utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
-				now.Format("2006-01-02"),
-			)
-			os.MkdirAll(outPath, os.ModePerm)
-			outFile := filepath.Join(outPath,
-				fmt.Sprintf("[%s][%s][%s] %s.%s",
-					now.Format("2006-01-02 15:04:05"),
+			r.startTime = t
+			r.outFile = filepath.Join(r.outPath,
+				fmt.Sprintf("[%s][%s][%s] %s",
+					t.Format(utils.GetTimeFormat()),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetTitle()),
-					streamURL.FileType,
 				),
 			)
 
@@ -82,7 +118,7 @@ func (r *Record) Run(ctx context.Context) {
 				"-y",
 				"-i", streamURL.PlayURL.String(),
 				"-c", "copy",
-				outFile,
+				fmt.Sprintf("%s.%s", r.outFile, streamURL.FileType),
 			)
 
 			r.cmd.Start()
@@ -91,8 +127,66 @@ func (r *Record) Run(ctx context.Context) {
 	}
 }
 
+func (r *Record) recordDanmaku() {
+	defer r.waitGroup.Done()
+	msg, err := r.LiveAPI.GetDanmaku(r.doneChan)
+	if err != nil {
+		return
+	}
+	for r.outFile == "" {
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	file, err := os.OpenFile(
+		fmt.Sprintf("%s.%s", r.outFile, "xml"),
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+		0755,
+	)
+	if err != nil {
+		return
+	}
+
+	lastFileName := r.outFile
+	file.WriteString(
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?><i><chatserver>chat.bilibili.com</chatserver><chatid>0</chatid><mission>0</mission><maxlimit>0</maxlimit><source>k-v</source>\n",
+	)
+	for m := range msg {
+		if lastFileName != r.outFile {
+			file.WriteString("</i>")
+			file.Close()
+			file, err = os.OpenFile(
+				fmt.Sprintf("%s.%s", r.outFile, "xml"),
+				os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+				0666,
+			)
+			if err != nil {
+				continue
+			}
+			lastFileName = r.outFile
+			file.WriteString(
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?><i><chatserver>chat.bilibili.com</chatserver><chatid>0</chatid><mission>0</mission><maxlimit>0</maxlimit><source>k-v</source>\n",
+			)
+		}
+
+		// TODO: fix negative number
+		file.WriteString(
+			fmt.Sprintf(
+				"<d p=\"%.4f,1,25,16777215,%d,0,0,0\">%s</d>\n",
+				time.Now().Sub(r.startTime).Seconds(),
+				m.SendTime,
+				m.Content,
+			),
+		)
+	}
+	file.WriteString("</i>")
+	file.Close()
+}
+
 // Stop record
 func (r *Record) Stop() {
-	close(r.StopChan)
-	r.cmd.Process.Kill()
+	if r.RecordStatus {
+		close(r.doneChan)
+		r.cmd.Process.Kill()
+		r.RecordStatus = false
+	}
 }

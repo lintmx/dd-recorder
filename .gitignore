@@ -19,4 +19,9 @@
 ### Go Patch ###
 /vendor/
 /bin/
-/recorder.log
+
+# log
+/log/
+
+# config
+/config.yml

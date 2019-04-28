@@ -18,6 +18,7 @@ type LiveAPI interface {
 	GetTitle() string
 	GetAuthor() string
 	GetStreamURLs() ([]StreamURL, error)
+	GetDanmaku(chan struct{}) (<-chan *DanmakuMessage, error)
 }
 
 // BaseAPI live info
@@ -33,6 +34,14 @@ type BaseAPI struct {
 type StreamURL struct {
 	PlayURL  url.URL
 	FileType string
+}
+
+// DanmakuMessage store danmaku msg
+type DanmakuMessage struct {
+	Content  string
+	SendTime int64
+	Type     uint8
+	UserName string
 }
 
 // GetLiveURL get live url
