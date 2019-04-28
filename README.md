@@ -15,7 +15,7 @@
 
 - [x] 直播录制
 
-- [ ] 弹幕录制
+- [x] 弹幕录制
 
 - [ ] 录制视频转码
 
@@ -27,6 +27,10 @@
 $ go get -u -v github.com/lintmx/dd-recorder
 
 ```
+
+## Depend
+
+- [FFmpeg](https://ffmpeg.org)
 
 ## Thanks
 
