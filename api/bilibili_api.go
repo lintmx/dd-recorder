@@ -154,7 +154,7 @@ func (b *BilibiliLive) GetStreamURLs() ([]StreamURL, error) {
 
 		streamURL := StreamURL{
 			PlayURL:  *liveURL,
-			FileType: "flv",
+			FileType: "ts",
 		}
 
 		streamURLs = append(streamURLs, streamURL)
@@ -168,14 +168,13 @@ func (b *BilibiliLive) GetStreamURLs() ([]StreamURL, error) {
 // GetDanmaku push danmaku in chan
 func (b *BilibiliLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, error) {
 	msgChan := make(chan *DanmakuMessage)
-	// heart packet
-	heartTicker := time.NewTicker(30 * time.Second)
-	defer heartTicker.Stop()
 
 	go func() {
-		defer close(msgChan)
+		// heart packet
+		heartTicker := time.NewTicker(30 * time.Second)
+		defer heartTicker.Stop()
 		for {
-		DanmakuRestart:
+			DanmakuRestart:
 			if b.roomID == 0 {
 				if err := b.getRealRoomID(); err != nil {
 					continue
@@ -215,7 +214,6 @@ func (b *BilibiliLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, e
 			if err != nil {
 				continue
 			}
-			defer conn.Close()
 
 			init, _ := json.Marshal(&danmakuInitMsg{
 				ClientVer: "1.5.10.1",
@@ -234,6 +232,11 @@ func (b *BilibiliLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, e
 			for {
 				select {
 				case <-done:
+					conn.Close()
+					select {
+					case <-exitChan:
+						close(msgChan)
+					}
 					return
 				case <-exitChan:
 					goto DanmakuRestart
@@ -241,7 +244,6 @@ func (b *BilibiliLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, e
 					conn.WriteMessage(websocket.BinaryMessage, msgEncode([]byte{}, OperationTypeHeart))
 				}
 			}
-
 		}
 	}()
 

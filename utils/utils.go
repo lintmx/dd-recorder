@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"runtime"
 	"strconv"
 )
 
@@ -65,14 +64,4 @@ func BKDRHash64(str string) string {
 	}
 
 	return strconv.FormatUint((hash & 0x7FFFFFFFFFFFFFFF), 16)
-}
-
-// GetTimeFormat for system
-// to fix windows invalid file name
-func GetTimeFormat() string {
-	if runtime.GOOS == "windows" {
-		return "2006-01-02 15_04_05"
-	}
-
-	return "2006-01-02 15:04:05"
 }

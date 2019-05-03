@@ -107,7 +107,7 @@ func (r *Record) recordStream() {
 			r.startTime = t
 			r.outFile = filepath.Join(r.outPath,
 				fmt.Sprintf("[%s][%s][%s] %s",
-					t.Format(utils.GetTimeFormat()),
+					t.Format("2006-01-02 15-04-05"),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetPlatformName()),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetAuthor()),
 					utils.FilterInvalidCharacters(r.LiveAPI.GetTitle()),
@@ -115,7 +115,9 @@ func (r *Record) recordStream() {
 			)
 
 			r.cmd = exec.Command("ffmpeg",
+				"-loglevel", "warning",
 				"-y",
+				"-timeout", "30000000",
 				"-i", streamURL.PlayURL.String(),
 				"-c", "copy",
 				fmt.Sprintf("%s.%s", r.outFile, streamURL.FileType),
@@ -171,7 +173,7 @@ func (r *Record) recordDanmaku() {
 		// TODO: fix negative number
 		file.WriteString(
 			fmt.Sprintf(
-				"<d p=\"%.4f,1,25,16777215,%d,0,0,0\">%s</d>\n",
+				"<d p=\"%.3f,1,25,16777215,%d,0,0,0\">%s</d>\n",
 				time.Now().Sub(r.startTime).Seconds(),
 				m.SendTime,
 				m.Content,
