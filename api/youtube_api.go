@@ -2,12 +2,13 @@ package api
 
 import (
 	"fmt"
-	"github.com/lintmx/dd-recorder/utils"
-	"github.com/tidwall/gjson"
-	"go.uber.org/zap"
 	"net/url"
 	"regexp"
 	"time"
+
+	"github.com/lintmx/dd-recorder/utils"
+	"github.com/tidwall/gjson"
+	"go.uber.org/zap"
 )
 
 /**
@@ -90,13 +91,14 @@ func (y *YouTubeLive) getChatInfo() (string, error) {
 // RefreshLiveInfo refresh live info
 func (y *YouTubeLive) RefreshLiveInfo() error {
 	liveInfo, err := y.getLiveInfo()
+	liveData := gjson.Get(liveInfo, "args.player_response").String()
 
 	if err != nil {
 		return err
 	}
 
-	status := gjson.Get(liveInfo, "args.livestream")
-	if status.Exists() && status.Int() == 1 {
+	status := gjson.Get(liveData, "playabilityStatus.status")
+	if status.Exists() && status.String() == "OK" {
 		y.liveStatus = true
 	} else {
 		y.liveStatus = false
@@ -127,20 +129,20 @@ func (y *YouTubeLive) GetStreamURLs() ([]StreamURL, error) {
 		})
 	}
 
-	gjson.Get(liveData, "streamingData.adaptiveFormats.#.url").ForEach(func(key, value gjson.Result) bool {
-		liveURL, err := url.Parse(value.String())
+	// gjson.Get(liveData, "streamingData.adaptiveFormats.#.url").ForEach(func(key, value gjson.Result) bool {
+	// 	liveURL, err := url.Parse(value.String())
 
-		if err != nil {
-			return true
-		}
+	// 	if err != nil {
+	// 		return true
+	// 	}
 
-		streamURLs = append(streamURLs, StreamURL{
-			PlayURL:  *liveURL,
-			FileType: "mp4",
-		})
+	// 	streamURLs = append(streamURLs, StreamURL{
+	// 		PlayURL:  *liveURL,
+	// 		FileType: "mp4",
+	// 	})
 
-		return true
-	})
+	// 	return true
+	// })
 
 	return streamURLs, nil
 }
@@ -183,7 +185,7 @@ func (y *YouTubeLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, er
 
 			gjson.Get(data[1], initMessageData).ForEach(func(key, value gjson.Result) bool {
 				msgChan <- &DanmakuMessage{
-					Content:  value.Get("message.simpleText").String(),
+					Content:  value.Get("message.runs.0.text").String(),
 					SendTime: value.Get("timestampUsec").Int() / 1e6,
 					Type:     1,
 					UserName: value.Get("authorName.simpleText").String(),
@@ -216,7 +218,7 @@ func (y *YouTubeLive) GetDanmaku(done chan struct{}) (<-chan *DanmakuMessage, er
 
 					gjson.Get(body, continuationMessageData).ForEach(func(key, value gjson.Result) bool {
 						msgChan <- &DanmakuMessage{
-							Content:  value.Get("message.simpleText").String(),
+							Content:  value.Get("message.runs.0.text").String(),
 							SendTime: value.Get("timestampUsec").Int() / 1e6,
 							Type:     1,
 							UserName: value.Get("authorName.simpleText").String(),
