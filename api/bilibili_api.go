@@ -32,7 +32,7 @@ var (
 	bilibiliRealRoomIDAPI = "https://api.live.bilibili.com/room/v1/Room/room_init?id=%s"
 	bilibiliRoomInfoAPI   = "https://api.live.bilibili.com/room/v1/Room/get_info?room_id=%d"
 	bilibiliRoomAnchorAPI = "https://api.live.bilibili.com/live_user/v1/UserInfo/get_anchor_in_room?roomid=%d"
-	bilibiliPlayURLAPI    = "https://api.live.bilibili.com/room/v1/Room/playUrl?cid=%d"
+	bilibiliPlayURLAPI    = "https://api.live.bilibili.com/room/v1/Room/playUrl?cid=%d&quality=4" // TODO: 暂时解决逼站画质问题，最好应该在获取 URL 那里解析 json 做判断
 	bilibiliDanmakuAPI    = "https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=%d&platform=pc&player=web"
 )
 

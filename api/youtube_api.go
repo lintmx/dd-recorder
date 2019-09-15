@@ -84,10 +84,6 @@ func (y *YouTubeLive) getLiveInfo() (string, error) {
 	return "", fmt.Errorf("youtubeLive get live info error")
 }
 
-func (y *YouTubeLive) getChatInfo() (string, error) {
-	return "", nil
-}
-
 // RefreshLiveInfo refresh live info
 func (y *YouTubeLive) RefreshLiveInfo() error {
 	liveInfo, err := y.getLiveInfo()
@@ -104,9 +100,9 @@ func (y *YouTubeLive) RefreshLiveInfo() error {
 		y.liveStatus = false
 	}
 
-	y.liveAuthor = gjson.Get(liveInfo, "args.author").String()
-	y.liveTitle = gjson.Get(liveInfo, "args.title").String()
-	y.videoID = gjson.Get(liveInfo, "args.video_id").String()
+	y.liveAuthor = gjson.Get(liveData, "videoDetails.author").String()
+	y.liveTitle = gjson.Get(liveData, "videoDetails.title").String()
+	y.videoID = gjson.Get(liveData, "videoDetails.videoId").String()
 
 	return nil
 }
@@ -128,21 +124,6 @@ func (y *YouTubeLive) GetStreamURLs() ([]StreamURL, error) {
 			FileType: "ts",
 		})
 	}
-
-	// gjson.Get(liveData, "streamingData.adaptiveFormats.#.url").ForEach(func(key, value gjson.Result) bool {
-	// 	liveURL, err := url.Parse(value.String())
-
-	// 	if err != nil {
-	// 		return true
-	// 	}
-
-	// 	streamURLs = append(streamURLs, StreamURL{
-	// 		PlayURL:  *liveURL,
-	// 		FileType: "mp4",
-	// 	})
-
-	// 	return true
-	// })
 
 	return streamURLs, nil
 }

@@ -17,6 +17,7 @@ type LiveAPI interface {
 	GetPlatformName() string
 	GetTitle() string
 	GetAuthor() string
+	GetLiveID() string
 	GetStreamURLs() ([]StreamURL, error)
 	GetDanmaku(chan struct{}) (<-chan *DanmakuMessage, error)
 }
@@ -67,6 +68,11 @@ func (b *BaseAPI) GetTitle() string {
 // GetAuthor return live author
 func (b *BaseAPI) GetAuthor() string {
 	return b.liveAuthor
+}
+
+// GetLiveID return live id
+func (b *BaseAPI) GetLiveID() string {
+	return b.liveID
 }
 
 // Check select api

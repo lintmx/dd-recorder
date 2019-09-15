@@ -3,15 +3,16 @@ package record
 import (
 	"context"
 	"fmt"
-	"github.com/lintmx/dd-recorder/api"
-	"github.com/lintmx/dd-recorder/instance"
-	"github.com/lintmx/dd-recorder/utils"
-	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/lintmx/dd-recorder/api"
+	"github.com/lintmx/dd-recorder/instance"
+	"github.com/lintmx/dd-recorder/utils"
+	"go.uber.org/zap"
 )
 
 // Record struct
@@ -173,9 +174,10 @@ func (r *Record) recordDanmaku() {
 		// TODO: fix negative number
 		file.WriteString(
 			fmt.Sprintf(
-				"<d p=\"%.3f,1,25,16777215,%d,0,0,0\">%s</d>\n",
+				"<d p=\"%.3f,1,25,16777215,%d,0,%s,0\">%s</d>\n",
 				time.Now().Sub(r.startTime).Seconds(),
 				m.SendTime,
+				m.UserName,
 				m.Content,
 			),
 		)
